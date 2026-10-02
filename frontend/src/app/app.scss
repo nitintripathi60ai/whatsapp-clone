@@ -1,0 +1,130 @@
+/* WhatsApp Theme Constants (Light Mode Focus) */
+:root {
+  --wa-bg: #ffffff;
+  --wa-sidebar: #ffffff;
+  --wa-header: #ffffff;
+  --wa-received-bubble: #ffffff;
+  --wa-sent-bubble: #d9fdd3;
+  --wa-text-primary: #111b21;
+  --wa-text-secondary: #667781;
+  --wa-accent-green: #00a884;
+  --wa-meta-ai: conic-gradient(from 180deg at 50% 50%, #4484ff, #9b51ff, #ff5b79, #ff9b44, #4484ff);
+}
+
+.dark {
+  --wa-bg: #0b141a;
+  --wa-sidebar: #111b21;
+  --wa-header: #202c33;
+  --wa-received-bubble: #202c33;
+  --wa-sent-bubble: #005c4b;
+  --wa-text-primary: #e9edef;
+  --wa-text-secondary: #8696a0;
+}
+
+:host {
+  display: block;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+@keyframes statusProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.status-progress-animation {
+  animation: statusProgress 3s linear forwards;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Debug classes - remove after testing */
+.debug-input, .mobile-input-fix {
+  border: 3px solid #ef4444 !important;
+  background-color: rgba(239,68,68,0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .debug-input, .mobile-input-fix {
+    border-color: #10b981 !important;
+  }
+}
+
+.meta-ai-gradient {
+  background: linear-gradient(45deg, #00d2ff 0%, #3a7bd5 100%);
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background-color: var(--wa-bg);
+  color: var(--wa-text-primary);
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  overflow-x: hidden;
+}
+
+/* Mobile specific fixes */
+@media (max-width: 768px) {
+  .debug-input {
+    border-color: #10b981 !important; /* Green if visible on mobile */
+  }
+  
+  /* Ensure input sticky works */
+  [class*="debug-input"] {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+  }
+  
+  /* Reduce padding on small screens */
+  .p-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .flex.h-dvh {
+    height: 100dvh !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+  
+  .grid.grid-rows-\[auto_1fr_auto\] {
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+  
+  /* Fix for mobile browsers where input might be hidden */
+  input, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+}

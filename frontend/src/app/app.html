@@ -1,0 +1,370 @@
+<div *ngIf="!auth.isLoggedIn()">
+  <app-login></app-login>
+</div>
+
+<div *ngIf="auth.isLoggedIn()" class="flex h-dvh md:h-screen bg-white overflow-hidden relative [background:linear-gradient(to bottom,#efeae2_0%,#f0ead6_100%)]">
+  <!-- Status Viewer Overlay -->
+  <div *ngIf="viewingStatus()" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center">
+    <!-- Progress Bar (Simulation) -->
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gray-800 z-20">
+      <div class="h-full bg-white status-progress-animation"></div>
+    </div>
+
+    <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+      <div class="flex items-center space-x-3">
+        <img [src]="auth.currentUser()?.profilePic || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'" class="w-10 h-10 rounded-full border border-white">
+        <div class="text-white">
+          <p class="font-bold text-sm">My Status</p>
+          <p class="text-xs opacity-80">{{ viewingStatus()?.time }}</p>
+        </div>
+      </div>
+      <button (click)="viewingStatus.set(null)" class="text-white p-2 hover:bg-white/10 rounded-full transition-colors">
+        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    
+    <img [src]="viewingStatus()?.url" class="max-w-full max-h-screen object-contain">
+  </div>
+
+  <app-profile-settings *ngIf="isProfileOpen()" (close)="onProfileClose()"></app-profile-settings>
+
+  <!-- Calling Screen Overlay -->
+  <div *ngIf="isCalling()" class="fixed inset-0 bg-[#008069] z-[100] flex flex-col items-center justify-center text-white">
+    <div class="mb-8">
+      <div class="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center animate-pulse">
+        <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        </svg>
+      </div>
+    </div>
+    <h2 class="text-3xl font-bold mb-2">{{ selectedChat()?.name || 'WhatsApp User' }}</h2>
+    <p class="text-xl mb-12 uppercase tracking-widest">{{ callingType() }} CALLING...</p>
+    <button (click)="isCalling.set(false)" class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-xl hover:bg-red-600 transition-colors">
+      <svg class="w-8 h-8 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+    </button>
+  </div>
+
+  <!-- Sidebar (App Chat List View) -->
+  <div 
+    class="bg-white flex flex-col transition-all duration-300 ease-in-out z-20 h-full overflow-hidden border-r border-[#e9edef]"
+    [class.w-full]="isSidebarOpen()"
+    [class.md:w-[450px]]="isSidebarOpen()"
+    [class.hidden]="!isSidebarOpen()"
+    [class.flex]="isSidebarOpen()"
+  >
+    <div class="flex flex-col h-full overflow-hidden relative">
+      <!-- App Header (WhatsApp Android Style) -->
+      <div class="bg-white p-4 pb-2 flex items-center justify-between flex-shrink-0 text-[#667781] z-10">
+        <h1 class="text-[22px] font-bold tracking-tight text-[#008069]">WhatsApp</h1>
+        <div class="flex items-center space-x-6">
+          <button (click)="currentTab.set('status')" class="hover:text-[#111b21] transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+          <button (click)="onSearchChange('')" class="hover:text-[#111b21] transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </button>
+          <button (click)="auth.logout()" class="hover:text-[#111b21] transition-colors">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Bar (Meta AI style) -->
+      <div class="p-3 pt-1 flex-shrink-0 bg-white">
+        <div class="bg-[#f0f2f5] flex items-center px-4 py-2.5 rounded-full group focus-within:bg-white focus-within:shadow-sm transition-all border border-transparent focus-within:border-[#00a884]">
+          <svg class="w-5 h-5 text-[#667781] mr-3 group-focus-within:text-[#00a884]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input 
+            type="text" 
+            placeholder="Ask Meta AI or Search" 
+            class="w-full bg-transparent outline-none text-[16px] text-[#111b21] placeholder:text-[#667781]"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+          >
+        </div>
+      </div>
+
+      <!-- Content Container -->
+      <div class="flex-1 overflow-y-auto bg-white custom-scrollbar min-h-0 relative">
+        <!-- Chats Tab content -->
+        <div *ngIf="currentTab() === 'chats'" class="h-full">
+          <app-sidebar [users]="filteredUsers()" (userClick)="selectChat($event)"></app-sidebar>
+        </div>
+        
+        <!-- Status Tab Content -->
+        <div *ngIf="currentTab() === 'status'" class="h-full bg-white overflow-y-auto custom-scrollbar">
+          <div class="p-4">
+            <h2 class="text-[20px] font-bold mb-4">Updates</h2>
+            
+            <!-- My Status -->
+            <div (click)="fileInputStatus.click()" class="flex items-center space-x-4 mb-6 cursor-pointer hover:bg-[#f5f6f6] p-2 rounded-lg transition-colors">
+              <div class="relative">
+                <img [src]="auth.currentUser()?.profilePic || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'" class="w-14 h-14 rounded-full object-cover p-0.5 border-2 border-[#00a884]">
+                <div class="absolute bottom-0 right-0 w-5 h-5 bg-[#00a884] rounded-full border-2 border-white flex items-center justify-center text-white">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </div>
+              </div>
+              <div>
+                <h3 class="font-bold text-[17px]">My status</h3>
+                <p class="text-[#667781] text-[14px]">Tap to add status update</p>
+              </div>
+              <input #fileInputStatus type="file" (change)="addStatus($event)" class="hidden" accept="image/*">
+            </div>
+
+            <!-- Recent Updates -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <p class="text-[14px] text-[#667781] font-bold">Recent updates</p>
+                <button class="text-[#00a884] text-[14px] font-bold">See all</button>
+              </div>
+              
+              <!-- Dummy Status 1 -->
+              <div (click)="viewStatus({url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330', time: '10:30 AM'})" class="flex items-center space-x-4 cursor-pointer hover:bg-[#f5f6f6] p-2 rounded-lg transition-colors">
+                <div class="w-14 h-14 rounded-full p-0.5 border-2 border-[#00a884]">
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330" class="w-full h-full rounded-full object-cover">
+                </div>
+                <div class="flex-1 border-b border-[#f2f2f2] pb-4">
+                  <h3 class="font-bold text-[17px]">Sapna BCA</h3>
+                  <p class="text-[#667781] text-[14px]">Today, 10:30 AM</p>
+                </div>
+              </div>
+
+              <!-- Dummy Status 2 -->
+              <div (click)="viewStatus({url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d', time: '09:15 AM'})" class="flex items-center space-x-4 cursor-pointer hover:bg-[#f5f6f6] p-2 rounded-lg transition-colors">
+                <div class="w-14 h-14 rounded-full p-0.5 border-2 border-[#00a884]">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" class="w-full h-full rounded-full object-cover">
+                </div>
+                <div class="flex-1 border-b border-[#f2f2f2] pb-4">
+                  <h3 class="font-bold text-[17px]">Rahul (Collage)</h3>
+                  <p class="text-[#667781] text-[14px]">Today, 09:15 AM</p>
+                </div>
+              </div>
+
+              <!-- User added statuses -->
+              <div *ngFor="let s of myStatuses()" (click)="viewStatus(s)" class="flex items-center space-x-4 cursor-pointer hover:bg-[#f5f6f6] p-2 rounded-lg transition-colors">
+                <div class="w-14 h-14 rounded-full p-0.5 border-2" [ngClass]="s.viewed ? 'border-gray-300' : 'border-[#00a884]'">
+                  <img [src]="s.url" class="w-full h-full rounded-full object-cover">
+                </div>
+                <div class="flex-1 border-b border-[#f2f2f2] pb-4">
+                  <h3 class="font-bold text-[17px]">My Status</h3>
+                  <p class="text-[#667781] text-[14px]">{{ s.time }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Channels Section -->
+            <div class="mt-8">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-[18px] font-bold">Channels</h2>
+                <button class="text-[#00a884] font-bold text-[14px]">Explore</button>
+              </div>
+              <p class="text-[#667781] text-[14px] mb-6">Stay updated on topics that matter to you. Find channels to follow below.</p>
+              
+              <div class="flex space-x-4 overflow-x-auto no-scrollbar pb-4">
+                <div class="flex-shrink-0 w-36 p-4 border border-[#e9edef] rounded-2xl flex flex-col items-center text-center">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="w-16 h-16 rounded-full mb-3">
+                  <h4 class="font-bold text-[15px] truncate w-full">WhatsApp</h4>
+                  <button class="mt-3 bg-[#d9fdd3] text-[#008069] px-6 py-1 rounded-full text-[14px] font-bold">Follow</button>
+                </div>
+                <div class="flex-shrink-0 w-36 p-4 border border-[#e9edef] rounded-2xl flex flex-col items-center text-center">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Meta_Platforms_Inc._logo.svg" class="w-16 h-16 rounded-full mb-3">
+                  <h4 class="font-bold text-[15px] truncate w-full">Meta AI</h4>
+                  <button class="mt-3 bg-[#d9fdd3] text-[#008069] px-6 py-1 rounded-full text-[14px] font-bold">Follow</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Communities Tab Content -->
+        <div *ngIf="currentTab() === 'communities'" class="h-full bg-white overflow-y-auto custom-scrollbar">
+          <div class="flex flex-col items-center justify-center p-8 text-center pt-12">
+            <div class="w-48 h-48 mb-6 relative">
+              <img src="https://static.whatsapp.net/rsrc.php/v3/y6/r/wa669ae5z23.png" class="w-full h-full object-contain opacity-20">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-24 h-24 text-[#8696a0]" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5s-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              </div>
+            </div>
+            <h2 class="text-[24px] font-bold mb-3">Stay connected with communities</h2>
+            <p class="text-[#667781] text-[16px] mb-8 max-w-sm leading-relaxed">Communities bring members together in topic-based groups, and make it easy to get admin announcements.</p>
+            <button (click)="createCommunity()" class="bg-[#00a884] text-white px-10 py-2.5 rounded-full font-bold shadow-md active:scale-95 transition-transform text-[15px]">Start your community</button>
+          </div>
+          
+          <!-- Example Community -->
+          <div class="mt-4 border-t border-[#f2f2f2]">
+            <div class="flex items-center space-x-4 p-4 hover:bg-[#f5f6f6] cursor-pointer transition-colors">
+              <div class="w-12 h-12 bg-[#e9edef] rounded-xl flex items-center justify-center text-[#8696a0]">
+                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-bold text-[17px]">New Community</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calls Tab Content -->
+        <div *ngIf="currentTab() === 'calls'" class="h-full bg-white overflow-y-auto custom-scrollbar">
+          <div class="p-4">
+            <!-- Call Link -->
+            <div (click)="createCallLink()" class="flex items-center space-x-4 mb-8 cursor-pointer hover:bg-[#f5f6f6] p-2 rounded-lg transition-colors">
+              <div class="w-14 h-14 bg-[#00a884] rounded-full flex items-center justify-center text-white shadow-sm">
+                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-[17px]">Create call link</h3>
+                <p class="text-[#667781] text-[14px]">Share a link for your WhatsApp call</p>
+              </div>
+            </div>
+
+            <!-- Recent Calls -->
+            <div class="space-y-6">
+              <p class="text-[14px] text-[#667781] font-bold">Recent</p>
+              
+              <div class="flex items-center space-x-4">
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" class="w-14 h-14 rounded-full object-cover">
+                <div class="flex-1 flex items-center justify-between border-b border-[#f2f2f2] pb-4">
+                  <div>
+                    <h3 class="font-bold text-[17px]">Amit (BCA)</h3>
+                    <div class="flex items-center space-x-1 mt-0.5">
+                      <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.2c.28-.27.36-.66.25-1.02A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+                      <p class="text-[#667781] text-[14px]">March 17, 10:45 PM</p>
+                    </div>
+                  </div>
+                  <button class="text-[#008069] p-2 hover:bg-[#f0f2f5] rounded-full">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.2c.28-.27.36-.66.25-1.02A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-4">
+                <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" class="w-14 h-14 rounded-full object-cover">
+                <div class="flex-1 flex items-center justify-between border-b border-[#f2f2f2] pb-4">
+                  <div>
+                    <h3 class="font-bold text-[17px]">Nisha (Home)</h3>
+                    <div class="flex items-center space-x-1 mt-0.5">
+                      <svg class="w-4 h-4 text-[#1fa855]" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                      <p class="text-[#667781] text-[14px]">Yesterday, 08:20 PM</p>
+                    </div>
+                  </div>
+                  <button class="text-[#008069] p-2 hover:bg-[#f0f2f5] rounded-full">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating Action Buttons (FAB) - Moved outside scrollable area to be fixed -->
+      <div *ngIf="currentTab() === 'chats'" class="absolute bottom-[100px] right-6 flex flex-col items-center space-y-4 z-50">
+        <!-- Meta AI Round Icon (Realistic) -->
+        <button (click)="askAI()" class="w-12 h-12 rounded-full shadow-lg active:scale-95 transition-transform flex items-center justify-center overflow-hidden bg-white border border-[#e9edef] p-0.5">
+          <div class="w-full h-full rounded-full meta-ai-gradient p-1 flex items-center justify-center">
+            <div class="w-full h-full bg-white rounded-full"></div>
+          </div>
+        </button>
+        <!-- New Chat FAB -->
+        <button (click)="loadUsers()" class="w-14 h-14 bg-[#00a884] text-white rounded-2xl flex items-center justify-center shadow-2xl active:scale-95 transition-transform">
+          <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+      </div>
+      
+      <!-- Bottom Navigation Bar (WhatsApp Mobile Style) -->
+      <div class="bg-white flex items-center justify-around py-1 border-t border-[#e9edef] flex-shrink-0 h-[80px] z-20">
+        <!-- Chats Tab -->
+        <button (click)="currentTab.set('chats')" class="flex flex-col items-center justify-center flex-1 group" [class.text-[#111b21]]="currentTab() === 'chats'" [class.text-[#667781]]="currentTab() !== 'chats'">
+          <div [class.bg-[#d9fdd3]]="currentTab() === 'chats'" class="px-5 py-1 rounded-full mb-1 transition-all duration-200">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 2.02.62 3.92 1.72 5.53L2 22l4.57-1.57C8.04 21.47 9.96 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.85 0-3.58-.48-5.05-1.31l-.36-.2-2.75.95.96-2.69-.23-.39C3.74 15.08 3.25 13.6 3.25 12c0-4.83 4.17-8.75 9.25-8.75s9.25 3.92 9.25 8.75-4.17 8.75-9.25 8.75z"/></svg>
+          </div>
+          <span class="text-[12px] font-bold">Chats</span>
+        </button>
+
+        <!-- Updates Tab -->
+        <button (click)="currentTab.set('status')" class="flex flex-col items-center justify-center flex-1 group" [class.text-[#111b21]]="currentTab() === 'status'" [class.text-[#667781]]="currentTab() !== 'status'">
+          <div [class.bg-[#d9fdd3]]="currentTab() === 'status'" class="px-5 py-1 rounded-full mb-1 transition-all duration-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke-dasharray="4 4"/></svg>
+          </div>
+          <span class="text-[12px] font-bold">Updates</span>
+        </button>
+
+        <!-- Communities Tab -->
+        <button (click)="currentTab.set('communities')" class="flex flex-col items-center justify-center flex-1 group" [class.text-[#111b21]]="currentTab() === 'communities'" [class.text-[#667781]]="currentTab() !== 'communities'">
+          <div [class.bg-[#d9fdd3]]="currentTab() === 'communities'" class="px-5 py-1 rounded-full mb-1 transition-all duration-200">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5s-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </div>
+          <span class="text-[12px] font-bold">Communities</span>
+        </button>
+
+        <!-- Calls Tab -->
+        <button (click)="currentTab.set('calls')" class="flex flex-col items-center justify-center flex-1 group" [class.text-[#111b21]]="currentTab() === 'calls'" [class.text-[#667781]]="currentTab() !== 'calls'">
+          <div [class.bg-[#d9fdd3]]="currentTab() === 'calls'" class="px-5 py-1 rounded-full mb-1 transition-all duration-200">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.2c.28-.27.36-.66.25-1.02A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+          </div>
+          <span class="text-[12px] font-bold">Calls</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col min-w-0 bg-[#efeae2] relative h-full" 
+       [class.hidden]="isSidebarOpen() && isMobile()"
+       [class.flex]="!isSidebarOpen() || !isMobile()">
+    
+    <!-- Generic App Background (No Chat Selected) -->
+    <div *ngIf="!selectedChat()" class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-white h-full">
+      <div class="w-24 h-24 mb-6 opacity-10">
+        <svg class="w-full h-full text-[#008069]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 2.02.62 3.92 1.72 5.53L2 22l4.57-1.57C8.04 21.47 9.96 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.85 0-3.58-.48-5.05-1.31l-.36-.2-2.75.95.96-2.69-.23-.39C3.74 15.08 3.25 13.6 3.25 12c0-4.83 4.17-8.75 9.25-8.75s9.25 3.92 9.25 8.75-4.17 8.75-9.25 8.75z"/></svg>
+      </div>
+      <h2 class="text-xl font-medium text-[#41525d] opacity-50">Select a chat to start messaging</h2>
+    </div>
+
+    <!-- Chat Window Content -->
+    <div *ngIf="selectedChat()" class="flex flex-col h-full overflow-hidden">
+      <!-- Chat Header (WhatsApp Android Style) -->
+      <div class="bg-white p-2 flex items-center justify-between flex-shrink-0 z-20 shadow-sm border-b border-[#e9edef]">
+        <div class="flex items-center space-x-0.5 overflow-hidden">
+          <button (click)="backToChats()" class="p-2 hover:bg-[#f0f2f5] rounded-full flex-shrink-0 text-[#008069]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </button>
+          <div class="flex items-center space-x-3 cursor-pointer p-1 rounded-lg hover:bg-[#f0f2f5] transition-colors overflow-hidden">
+            <div class="relative flex-shrink-0">
+              <img [src]="selectedChat()?.profilePic || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'" 
+                   class="w-10 h-10 rounded-full object-cover shadow-sm">
+            </div>
+            <div class="min-w-0">
+              <h3 class="font-bold text-[#111b21] truncate text-[17px] leading-tight">{{ selectedChat()?.name }}</h3>
+              <p class="text-[12px] text-[#667781] truncate leading-tight mt-0.5">
+                {{ typingUsers().includes(selectedChat()?.name) ? 'typing...' : (selectedChat()?.isOnline ? 'online' : 'last seen today at 22:21') }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-1 text-[#54656f]">
+          <button (click)="startCall('VIDEO')" class="p-2.5 hover:bg-[#f0f2f5] rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          </button>
+          <button (click)="startCall('VOICE')" class="p-2.5 hover:bg-[#f0f2f5] rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.2c.28-.27.36-.66.25-1.02A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+          </button>
+          <button class="p-2.5 hover:bg-[#f0f2f5] rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Messages Area (With Wallpaper) -->
+      <div #scrollContainer class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#efeae2] relative" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat; background-attachment: fixed; background-size: 400px;">
+        <app-chat-window [messages]="messages()"></app-chat-window>
+      </div>
+      
+      <!-- Message Input Area -->
+      <div class="bg-white flex-shrink-0 z-30 border-t border-[#e9edef] pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+        <app-message-input></app-message-input>
+      </div>
+    </div>
+  </div>
+</div>
+

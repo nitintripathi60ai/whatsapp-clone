@@ -1,0 +1,59 @@
+<div class="flex flex-col space-y-1.5">
+  <div *ngFor="let msg of messages()" class="flex flex-col" [ngClass]="isMe(msg) ? 'items-end' : 'items-start'">
+    
+    <!-- Date Separator -->
+    <div *ngIf="msg === messages()[0]" class="self-center my-4 bg-white dark:bg-[#182229] text-[#667781] dark:text-[#8696a0] text-[12px] px-3 py-1 rounded-lg uppercase font-medium shadow-sm border border-[#e9edef] dark:border-none">Today</div>
+
+    <div class="max-w-[85%] md:max-w-[70%] relative group">
+      
+      <!-- Message Bubble -->
+      <div 
+        class="px-2.5 py-1.5 rounded-lg shadow-sm relative cursor-pointer min-w-[80px]"
+        [ngClass]="isMe(msg) ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-tr-none ml-12' : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-tl-none mr-12'"
+        (click)="toggleReactionMenu(msg._id)"
+      >
+        <!-- Quoted/Reply Message (Generic) -->
+        <div *ngIf="msg.replyTo" class="mb-1.5 bg-black bg-opacity-5 dark:bg-opacity-20 rounded-md border-l-4 border-[#06cf9c] p-2 flex flex-col space-y-0.5">
+          <span class="text-[12px] font-bold text-[#06cf9c]">{{ msg.replyTo.sender }}</span>
+          <p class="text-[13px] text-[#667781] dark:text-[#8696a0] truncate leading-tight">{{ msg.replyTo.text }}</p>
+        </div>
+
+        <!-- Sender Name -->
+        <div *ngIf="!isMe(msg) && !selectedChat()?.phone" class="text-[12.5px] font-bold text-[#06cf9c] mb-0.5">{{ msg.sender }}</div>
+        
+        <!-- Multimedia Content -->
+        <div class="mb-1" *ngIf="msg.type === 'image'">
+          <img [src]="msg.fileData" class="max-w-full rounded-md shadow-sm">
+        </div>
+
+        <!-- Message Text -->
+        <div class="text-[15px] leading-[1.4] break-words pr-14">{{ msg.text }}</div>
+        
+        <!-- Bottom Info (Time + Ticks) -->
+        <div class="absolute bottom-1 right-1.5 flex items-center space-x-1 pl-4">
+          <span class="text-[10px] text-[#667781] dark:text-[#8696a0] uppercase">{{ formatTime(msg.createdAt || msg.timestamp) }}</span>
+          <!-- Blue Ticks -->
+          <svg *ngIf="isMe(msg)" class="w-4 h-4 text-[#53bdeb]" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.547a.5.5 0 0 1 .708 0z"/>
+            <path d="M10.354 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l3.146-3.147a.5.5 0 0 1 .708 0z"/>
+          </svg>
+        </div>
+
+        <!-- Reaction Display -->
+        <div *ngIf="msg.reactions?.length" class="absolute -bottom-3 left-1 bg-white dark:bg-[#202c33] shadow-md rounded-full px-1.5 py-0.5 flex items-center space-x-1 border border-[#e9edef] dark:border-[#111b21] scale-90">
+          <span *ngFor="let r of msg.reactions" class="text-[12px]">{{ r.emoji }}</span>
+        </div>
+      </div>
+
+      <!-- Reaction Menu -->
+      <div *ngIf="showReactionMenu() === msg._id" class="absolute -top-12 left-0 bg-white dark:bg-[#233138] shadow-xl rounded-full px-3 py-1.5 flex items-center space-x-3 z-50 animate-in zoom-in-50 duration-200 border border-[#e9edef] dark:border-[#374248]">
+        <button (click)="react(msg._id, '❤️')" class="hover:scale-125 transition-transform">❤️</button>
+        <button (click)="react(msg._id, '👍')" class="hover:scale-125 transition-transform">👍</button>
+        <button (click)="react(msg._id, '😂')" class="hover:scale-125 transition-transform">😂</button>
+        <button (click)="react(msg._id, '😮')" class="hover:scale-125 transition-transform">😮</button>
+        <button (click)="react(msg._id, '😢')" class="hover:scale-125 transition-transform">😢</button>
+        <button (click)="react(msg._id, '🙏')" class="hover:scale-125 transition-transform">🙏</button>
+      </div>
+    </div>
+  </div>
+</div>
